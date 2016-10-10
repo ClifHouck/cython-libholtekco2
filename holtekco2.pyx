@@ -19,6 +19,7 @@ class ProblemReadingDataException(CO2Exception):
 cdef class CO2Device:
     cdef holtekco2.co2_device* _c_co2_device
 
+    # TODO(ClifHouck): Allow user to specify which device to open.
     def __cinit__(self):
         """Initializes CO2 Device to first matching device.
 
@@ -68,9 +69,9 @@ cdef class CO2Device:
         # NOTE(ClifHouck): From my limited experiments it only takes 3-4 reads
         # to get to a recognizable data read, but trying a few more times here
         # for convenience's sake.
+        cdef co2_device_data data 
         for i in range(0, 10):
-            cdef co2_device_data data = \
-                holtekco2.co2_read_data(self._c_co2_device)
+            data = holtekco2.co2_read_data(self._c_co2_device)
 
             if data.tag == CO2:
                 return {'type': 'co2',
@@ -82,7 +83,8 @@ cdef class CO2Device:
                         'unit': 'degrees fahrenheit'}
             elif data.tag == HUMIDITY:
                 return {'type': 'humidity',
-                        'value': holtekco2.co2_get_relative_humidity(data.value),
+                        'value': \
+                            holtekco2.co2_get_relative_humidity(data.value),
                         'unit': 'percentage'}
 
         raise ProblemReadingDataException(
